@@ -5,7 +5,7 @@ import sys
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key = os.environ.get("OPENAI_API_KEY"))
 # Define the classification function
 def classify_job(job_title, job_description):
     prompt = f"""
