@@ -1,13 +1,10 @@
-from fastapi import FastAPI
-from typing import Optional
-from jobspy import scrape_jobs
-import sys
-import os
+import asyncio
 from openai import OpenAI
+from constants import OPENAI_API_KEY, BATCH_SIZE
 
-client = OpenAI(api_key = os.environ.get("OPENAI_API_KEY"))
-# Define the classification function
-def classify_job(job_title, job_description):
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+async def classify_job(job_title, job_description):
     prompt = f"""
     You are an AI trained to classify job descriptions as "Entry-Level" or "Not Entry-Level."
 
@@ -56,79 +53,27 @@ def classify_job(job_title, job_description):
     Do not provide any explanation; just return one of these two outputs.
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4",
+    response = await asyncio.to_thread(
+        client.chat.completions.create,
+        model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": "You are a job classification assistant."},
                   {"role": "user", "content": prompt}],
-        temperature=0,  # To ensure deterministic output
-        max_tokens=10
-    )
-   
-    return response.choices[0].message.content
-
-
-
-
-
-
-
-
-
-
-
-app = FastAPI()
-
-@app.get("/python-version")
-async def python_version():
-    return {"python_version": sys.version}
-
-@app.get("/scrape-jobs")
-async def scrape_jobs_api(
-    search: Optional[str] = "software engineer",
-    location: Optional[str] = "San Francisco, CA",
-    resultcount: Optional[str] = 5,
-):
-    jobs = scrape_jobs(
-        site_name=["linkedin"],
-        search_term=search,
-        google_search_term=f"{search} jobs near {location} since yesterday",
-        location=location,
-        results_wanted=int(resultcount),
-        hours_old=24,
-        country_indeed="USA",
-        linkedin_fetch_description=True,
+        temperature=0,
+        max_tokens=5
     )
 
-    filtered_jobs = jobs[
-        [
-            "id",
-            "site",
-            "job_url",
-            "job_url_direct",
-            "title",
-            "company",
-            "location",
-            "job_type",
-            "job_level",
-            "job_function",
-            "emails",
-            "description",
-            "company_url",
-        ]
-    ]
+    return response.choices[0].message.content.strip()
 
-
-    job_data_dict = filtered_jobs.to_dict(orient="records")  # List of dictionaries
-
-    for job in job_data_dict:
-        title = job["title"]
-        description = job["description"]
-        classification = classify_job(title, description)
-        filtered_jobs['entry_level'] = classification
-        print(f"Title: {title},classification: {classification}")
+async def process_jobs_in_batches(jobs):
+    results = []
     
+    for i in range(0, len(jobs), BATCH_SIZE):
+        batch = jobs[i : i + BATCH_SIZE]
+        tasks = [classify_job(job["title"], job["description"]) for _, job in batch.iterrows()]
+        batch_results = await asyncio.gather(*tasks)
+        results.extend(batch_results)
+        await asyncio.sleep(2)
     
-
-    return filtered_jobs.to_dict(orient="records")
-
+    cleaned_list = [item.strip('"') for item in results]
+    return cleaned_list
 
