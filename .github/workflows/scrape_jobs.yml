@@ -36,48 +36,43 @@ jobs:
             "Web Developer"
           )
 
-          # Calculate the index (modulo ensures rotation over 24 hours)
+          # Calculate the base index for this hour
           HOUR_INDEX=$(( ($(date +%-H) * 20) / 24 ))
-          
-          # Extract the current job role
-          SEARCH_QUERY="${JOB_ROLES[$HOUR_INDEX]}"
+
+          # Select three job roles for this hour
+          ROLE_1="${JOB_ROLES[$HOUR_INDEX]}"
+          ROLE_2="${JOB_ROLES[$(( (HOUR_INDEX + 1) % 20 ))]}"
+          ROLE_3="${JOB_ROLES[$(( (HOUR_INDEX + 2) % 20 ))]}"
 
           # Convert to URL encoded format (replace spaces with %20)
-          SEARCH_QUERY_URL=$(echo $SEARCH_QUERY | sed 's/ /%20/g')
+          ROLE_1_URL=$(echo $ROLE_1 | sed 's/ /%20/g')
+          ROLE_2_URL=$(echo $ROLE_2 | sed 's/ /%20/g')
+          ROLE_3_URL=$(echo $ROLE_3 | sed 's/ /%20/g')
 
-          # Save for next steps
-          echo "SEARCH_QUERY=$SEARCH_QUERY" >> $GITHUB_ENV
-          echo "SEARCH_QUERY_URL=$SEARCH_QUERY_URL" >> $GITHUB_ENV
-          echo "Selected job role: $SEARCH_QUERY"
+          # Store values for later steps
+          echo "ROLE_1=$ROLE_1_URL" >> $GITHUB_ENV
+          echo "ROLE_2=$ROLE_2_URL" >> $GITHUB_ENV
+          echo "ROLE_3=$ROLE_3_URL" >> $GITHUB_ENV
 
-      - name: Make HTTP Request to Scraper
+          echo "Selected job roles: $ROLE_1, $ROLE_2, $ROLE_3"
+
+      - name: Make HTTP Request for Role 1
         run: |
-          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${{ env.SEARCH_QUERY_URL }}&resultcount=100"
+          echo "Running search for: ${{ env.ROLE_1 }}"
+          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${{ env.ROLE_1 }}&resultcount=100"
 
-      - name: Wait for 1 Minute
-        run: sleep 60  # Waits 60 seconds before executing the next role
+      - name: Wait for 1 Minutes
+        run: sleep 60  # Waits 3 minutes
 
-      - name: Run for Next Job Role
+      - name: Make HTTP Request for Role 2
         run: |
-          NEXT_INDEX=$(( ($(date +%-H) * 20) / 24 + 1 ))
-          if [ $NEXT_INDEX -ge 20 ]; then NEXT_INDEX=0; fi
-          NEXT_QUERY="${JOB_ROLES[$NEXT_INDEX]}"
-          NEXT_QUERY_URL=$(echo $NEXT_QUERY | sed 's/ /%20/g')
+          echo "Running search for: ${{ env.ROLE_2 }}"
+          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${{ env.ROLE_2 }}&resultcount=100"
 
-          echo "Next job role: $NEXT_QUERY"
+      - name: Wait for Another 1 Minutes
+        run: sleep 60  # Waits another 3 minutes
 
-          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${NEXT_QUERY_URL}&resultcount=100"
-
-      - name: Wait for Another 1 Minute
-        run: sleep 60  # Waits another 60 seconds
-
-      - name: Run for Another Job Role (Third Time)
+      - name: Make HTTP Request for Role 3
         run: |
-          NEXT_INDEX2=$(( ($(date +%-H) * 20) / 24 + 2 ))
-          if [ $NEXT_INDEX2 -ge 20 ]; then NEXT_INDEX2=0; fi
-          NEXT_QUERY2="${JOB_ROLES[$NEXT_INDEX2]}"
-          NEXT_QUERY_URL2=$(echo $NEXT_QUERY2 | sed 's/ /%20/g')
-
-          echo "Third job role: $NEXT_QUERY2"
-
-          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${NEXT_QUERY_URL2}&resultcount=100"
+          echo "Running search for: ${{ env.ROLE_3 }}"
+          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${{ env.ROLE_3 }}&resultcount=100"
