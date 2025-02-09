@@ -1,0 +1,14 @@
+name: Scrape Jobs Every Hour
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # Runs every hour at 0 minutes
+
+jobs:
+  scrape_jobs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Make HTTP Request to Scraper URL
+        run: |
+          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=software%20engineer&resultcount=100"
