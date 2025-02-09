@@ -7,7 +7,8 @@ import datetime
 import json
 
 if not firebase_admin._apps:
-    firebase_secrets = json.loads(os.getenv("FIREBASE_CREDENTIALS"))
+    firebase_creds = os.getenv("FIREBASE_CREDENTIALS")
+    firebase_secrets = json.loads(firebase_creds.replace("\n", "\\n"))
     cred = credentials.Certificate(firebase_secrets)
     #cred = credentials.Certificate("./serviceAccountKey.json") 
     firebase_admin.initialize_app(cred)
@@ -73,7 +74,7 @@ async def delete_old_records(collection_name, date_field="date_posted", days_old
                     print(f"Deleted {doc.id} (Posted: {date_posted})")
 
             except Exception as e:
-                print(f"Skipping {doc.id} due to error: {e}")
+                continue
 
     print(f"✅ Deleted {deleted_count} old records from {collection_name}.")
 
@@ -99,6 +100,7 @@ def get_all_jobs(collection_name):
             print(f"Retrieved {len(jobs_df)} job records successfully.")
 
         jobs_df = jobs_df.replace({np.nan: None})
+        jobs_df.to_csv("jobs.csv", index=False)
         return jobs_df
 
     except Exception as e:

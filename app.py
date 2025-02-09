@@ -2,11 +2,12 @@ from fastapi import FastAPI
 from typing import Optional
 import pandas as pd
 from scraper import scrape_jobs_async
-from classifier import process_jobs_in_batches
+from classifier import classify_jobs
 from storage import count_documents,save_large_dataset_to_firestore,get_all_jobs
 from constants import JOB_ROLES 
 from datetime import datetime, timedelta
 import asyncio
+from bot2 import classify_job_with_model
 
 
 app = FastAPI()
@@ -41,15 +42,16 @@ async def scrape_jobs_api(
             ["id", "site", "job_url", "job_url_direct", "title", "company", "location", "job_type", "description", "company_url", "date_posted"]
         ].copy()
         
-        classifications = await process_jobs_in_batches(filtered_jobs)
+        #classifications = await process_jobs_in_batches(filtered_jobs)
+        classifications =  classify_jobs(filtered_jobs)
         filtered_jobs["entry_level"] = classifications
+        filtered_jobs["date_posted"] = filtered_jobs["date_posted"].fillna(pd.to_datetime(datetime.today().strftime('%Y-%m-%d'), errors='coerce').date())
         filtered_jobs["date_posted"] = pd.to_datetime(filtered_jobs["date_posted"], errors="coerce").dt.date
-        filtered_jobs.dropna(subset=["date_posted"], inplace=True)
         filtered_jobs = filtered_jobs[filtered_jobs['date_posted'] >= specified_date]
         filtered_jobs.replace({pd.NA: None}, inplace=True)
         filtered_jobs = pd.DataFrame(filtered_jobs) 
         entry_level_jobs = filtered_jobs.loc[filtered_jobs['entry_level'] =="Entry-Level"].copy()
-        
+        print("entry Jobs:", filtered_jobs['entry_level'].value_counts())
         
         a = await save_large_dataset_to_firestore(entry_level_jobs, 'jobs')
         
