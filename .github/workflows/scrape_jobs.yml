@@ -2,14 +2,82 @@ name: Scrape Jobs Every Hour
 
 on:
   schedule:
-    - cron: "0 * * * *"  # Runs every hour at 0 minutes
-  workflow_dispatch:  # Enables manual trigger
+    - cron: "0 * * * *"  # Runs every hour
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   scrape_jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Make HTTP Request to Scraper URL
+      - name: Set Job Roles and Calculate Role for Current Hour
+        id: job_role
         run: |
-          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=software%20engineer&resultcount=100"
+          declare -a JOB_ROLES=(
+            "Software Engineer"
+            "Software Developer"
+            "Front-End Developer"
+            "Back-End Developer"
+            "Full-Stack Developer"
+            "Mobile App Developer"
+            "Embedded Software Engineer"
+            "Game Developer"
+            "Cloud Engineer"
+            "DevOps Engineer"
+            "Machine Learning Engineer"
+            "AI Engineer"
+            "Data Engineer"
+            "Data Analyst"
+            "IT Support Engineer"
+            "Software Test Engineer"
+            "UI/UX Designer"
+            "Blockchain Developer"
+            "IoT Engineer"
+            "Web Developer"
+          )
+
+          # Calculate the index (modulo ensures rotation over 24 hours)
+          HOUR_INDEX=$(( ($(date +%-H) * 20) / 24 ))
+          
+          # Extract the current job role
+          SEARCH_QUERY="${JOB_ROLES[$HOUR_INDEX]}"
+
+          # Convert to URL encoded format (replace spaces with %20)
+          SEARCH_QUERY_URL=$(echo $SEARCH_QUERY | sed 's/ /%20/g')
+
+          # Save for next steps
+          echo "SEARCH_QUERY=$SEARCH_QUERY" >> $GITHUB_ENV
+          echo "SEARCH_QUERY_URL=$SEARCH_QUERY_URL" >> $GITHUB_ENV
+          echo "Selected job role: $SEARCH_QUERY"
+
+      - name: Make HTTP Request to Scraper
+        run: |
+          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${{ env.SEARCH_QUERY_URL }}&resultcount=100"
+
+      - name: Wait for 1 Minute
+        run: sleep 60  # Waits 60 seconds before executing the next role
+
+      - name: Run for Next Job Role
+        run: |
+          NEXT_INDEX=$(( ($(date +%-H) * 20) / 24 + 1 ))
+          if [ $NEXT_INDEX -ge 20 ]; then NEXT_INDEX=0; fi
+          NEXT_QUERY="${JOB_ROLES[$NEXT_INDEX]}"
+          NEXT_QUERY_URL=$(echo $NEXT_QUERY | sed 's/ /%20/g')
+
+          echo "Next job role: $NEXT_QUERY"
+
+          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${NEXT_QUERY_URL}&resultcount=100"
+
+      - name: Wait for Another 1 Minute
+        run: sleep 60  # Waits another 60 seconds
+
+      - name: Run for Another Job Role (Third Time)
+        run: |
+          NEXT_INDEX2=$(( ($(date +%-H) * 20) / 24 + 2 ))
+          if [ $NEXT_INDEX2 -ge 20 ]; then NEXT_INDEX2=0; fi
+          NEXT_QUERY2="${JOB_ROLES[$NEXT_INDEX2]}"
+          NEXT_QUERY_URL2=$(echo $NEXT_QUERY2 | sed 's/ /%20/g')
+
+          echo "Third job role: $NEXT_QUERY2"
+
+          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${NEXT_QUERY_URL2}&resultcount=100"
