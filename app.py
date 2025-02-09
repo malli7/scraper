@@ -7,7 +7,6 @@ from storage import count_documents,save_large_dataset_to_firestore,get_all_jobs
 from constants import JOB_ROLES 
 from datetime import datetime, timedelta
 import asyncio
-from bot2 import classify_job_with_model
 
 
 app = FastAPI()
