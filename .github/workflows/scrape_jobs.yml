@@ -59,7 +59,7 @@ jobs:
       - name: Make HTTP Request for Role 1
         run: |
           echo "Running search for: ${{ env.ROLE_1 }}"
-          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${{ env.ROLE_1 }}&resultcount=200"
+          curl -X GET "https://job-scraper.up.railway.app/scrape-jobs?search=${{ env.ROLE_1 }}&resultcount=200"
 
       - name: Wait for 1 Minutes
         run: sleep 60  # Waits 3 minutes
@@ -67,7 +67,7 @@ jobs:
       - name: Make HTTP Request for Role 2
         run: |
           echo "Running search for: ${{ env.ROLE_2 }}"
-          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${{ env.ROLE_2 }}&resultcount=200"
+          curl -X GET "https://job-scraper.up.railway.app/scrape-jobs?search=${{ env.ROLE_2 }}&resultcount=200"
 
       - name: Wait for Another 1 Minutes
         run: sleep 60  # Waits another 3 minutes
@@ -75,4 +75,4 @@ jobs:
       - name: Make HTTP Request for Role 3
         run: |
           echo "Running search for: ${{ env.ROLE_3 }}"
-          curl -X GET "https://scraper-production-234d.up.railway.app/scrape-jobs?search=${{ env.ROLE_3 }}&resultcount=200"
+          curl -X GET "https://job-scraper.up.railway.app/scrape-jobs?search=${{ env.ROLE_3 }}&resultcount=200"

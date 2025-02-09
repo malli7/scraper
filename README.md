@@ -11,7 +11,7 @@ A comprehensive job scraping and classification system built using **FastAPI**, 
 
 ## 🌐 Deployment
 
-The application is deployed on **[Railway.app](https://scraper-production-234d.up.railway.app/)**.
+The application is deployed on **[Railway.app](https://job-scraper.up.railway.app/)**.
 
 ---
 
@@ -105,9 +105,9 @@ This project is licensed under the **MIT License**.
 
 ## 📧 Contact
 
-For inquiries, please contact **[yourname@example.com](mailto:mallireddy2001@gmail.com)**.
+For inquiries, please contact **[mallikarjunareddygayam77@gmail.com](mailto:mallikarjunareddygayam77@gmail.com)**.
 
 ---
 
-🚀 **Live Deployment:** [Railway.app](https://scraper-production-234d.up.railway.app/)
+🚀 **Live Deployment:** [Railway.app](https://job-scraper.up.railway.app/)
 
