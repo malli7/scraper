@@ -3,6 +3,7 @@ name: Scrape Jobs Every Hour
 on:
   schedule:
     - cron: "0 * * * *"  # Runs every hour at 0 minutes
+  workflow_dispatch:  # Enables manual trigger
 
 jobs:
   scrape_jobs:
