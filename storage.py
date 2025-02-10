@@ -5,12 +5,12 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import datetime
 import json
+import pytz
 
 if not firebase_admin._apps:
     firebase_creds = os.getenv("FIREBASE_CREDENTIALS")
     firebase_secrets = json.loads(firebase_creds.replace("\n", "\\n"))
     cred = credentials.Certificate(firebase_secrets)
-    #cred = credentials.Certificate("./serviceAccountKey.json") 
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
@@ -50,28 +50,35 @@ async def save_large_dataset_to_firestore(jobs_df, collection_name, batch_size=4
     
 
 
+
+
 async def delete_old_records(collection_name, date_field="date_posted", days_old=3):
-    
-    today = datetime.datetime.utcnow()
+   
+    today = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
     threshold_date = today - datetime.timedelta(days=days_old)
 
     docs = db.collection(collection_name).stream()
     deleted_count = 0
+
     for doc in docs:
         data = doc.to_dict()
 
         if date_field in data:
             try:
                 date_posted = data[date_field]
-                if isinstance(date_posted, str):
-                    date_posted = datetime.datetime.strptime(date_posted, "%Y-%m-%d")
-                elif isinstance(date_posted, firestore.SERVER_TIMESTAMP):
-                    date_posted = date_posted.to_datetime()
 
+                if isinstance(date_posted, str):
+                    date_posted = datetime.datetime.strptime(date_posted, "%Y-%m-%d").replace(tzinfo=pytz.UTC)
+                elif isinstance(date_posted, datetime.datetime):
+                    if date_posted.tzinfo is None:
+                        date_posted = date_posted.replace(tzinfo=pytz.UTC)  
+                else:
+                    continue  
+                
+                # Perform comparison
                 if date_posted < threshold_date:
                     db.collection(collection_name).document(doc.id).delete()
                     deleted_count += 1
-                    print(f"Deleted {doc.id} (Posted: {date_posted})")
 
             except Exception as e:
                 continue
@@ -106,3 +113,5 @@ def get_all_jobs(collection_name):
     except Exception as e:
         print(f"Error retrieving jobs: {e}")
         return pd.DataFrame()  
+
+
