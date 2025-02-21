@@ -19,3 +19,4 @@ async def scrape_jobs_async(search, location, resultcount):
     except Exception as e:
         print(f"Error occurred: {e}") 
         return None 
+    

@@ -41,9 +41,10 @@ async def scrape_jobs_api(
             ["id", "site", "job_url", "job_url_direct", "title", "company", "location", "job_type", "description", "company_url", "date_posted"]
         ].copy()
         
-        #classifications = await process_jobs_in_batches(filtered_jobs)
         classifications =  classify_jobs(filtered_jobs)
         filtered_jobs["entry_level"] = classifications
+        filtered_jobs.drop_duplicates(subset=["id"], inplace=True)
+        filtered_jobs.dropna(subset=["id","title", "entry_level", "description"], inplace=True)
         filtered_jobs["date_posted"] = filtered_jobs["date_posted"].fillna(pd.to_datetime(datetime.today().strftime('%Y-%m-%d'), errors='coerce').date())
         filtered_jobs["date_posted"] = pd.to_datetime(filtered_jobs["date_posted"], errors="coerce").dt.date
         filtered_jobs = filtered_jobs[filtered_jobs['date_posted'] >= specified_date]
