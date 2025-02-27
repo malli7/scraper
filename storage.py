@@ -25,7 +25,7 @@ def convert_firestore_compatible(data):
 
 async def save_large_dataset_to_firestore(jobs_df, collection_name, batch_size=400):
     current_time = datetime.datetime.now().time()
-    if current_time >= datetime.time(0, 0) and current_time < datetime.time(1, 0):
+    if current_time >= datetime.time(14, 0) and current_time < datetime.time(15, 0):
         await delete_old_records("jobs", days_old=3)
     if jobs_df.empty:
         print("Dataset is empty. No data to upload.")
