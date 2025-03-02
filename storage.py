@@ -52,8 +52,6 @@ async def save_large_dataset_to_firestore(jobs_df, collection_name, batch_size=4
     
 
 
-
-
 async def delete_old_records(collection_name, date_field="date_posted", days_old=3):
    
     today = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
@@ -117,3 +115,23 @@ def get_all_jobs(collection_name):
         return pd.DataFrame()  
 
 
+def get_paginated_jobs(collection_name, page_size=10, page_number=1):
+    try:
+        offset = (page_number - 1) * page_size
+        query = db.collection(collection_name).order_by("date_posted", direction=firestore.Query.DESCENDING).offset(offset).limit(page_size)
+        
+        docs = query.stream()
+        jobs_list = [doc.to_dict() for doc in docs]
+        jobs_df = pd.DataFrame(jobs_list)
+
+        if jobs_df.empty:
+            print("No jobs found in the collection.")
+        else:
+            print(f"Retrieved {len(jobs_df)} job records successfully.")
+
+        jobs_df = jobs_df.replace({np.nan: None})
+        return jobs_df
+
+    except Exception as e:
+        print(f"Error retrieving paginated jobs: {e}")
+        return pd.DataFrame()

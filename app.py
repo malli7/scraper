@@ -1,9 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from typing import Optional
 import pandas as pd
 from scraper import scrape_jobs_async
 from classifier import classify_jobs
-from storage import count_documents,save_large_dataset_to_firestore,get_all_jobs
+from storage import count_documents,save_large_dataset_to_firestore,get_paginated_jobs,delete_old_records
 from constants import JOB_ROLES 
 from datetime import datetime, timedelta
 import asyncio
@@ -15,11 +15,23 @@ app = FastAPI()
 async def old_api():
     return count_documents("jobs") 
 
-@app.get('/jobs')
-def get_jobs():
-    x =  get_all_jobs("jobs")
-    print(x.head())
-    return x
+@app.get('/delete')
+async def delete_old_records_route(
+    days_old: int = Query(3, description="Number of days old to delete records")
+):
+    await delete_old_records("jobs", days_old=days_old)
+    return {"message": f"Deleted records older than {days_old} days"}
+
+
+@app.get('/paginated-jobs')
+def get_paginated_jobs_route(
+    page_size: int = Query(10, description="Number of jobs per page"),
+    page_number: int = Query(1, description="Page number to retrieve")
+):
+    jobs_df = get_paginated_jobs("jobs", page_size, page_number)
+    if jobs_df.empty:
+        return {"message": "No jobs found"}
+    return jobs_df.to_dict(orient='records')
 
 
 @app.get("/scrape-jobs")
