@@ -36,8 +36,7 @@ def get_paginated_jobs_route(
     
     # Convert Timestamp objects to strings
     jobs_df['date_posted'] = jobs_df['date_posted'].astype(str)
-    
-    return JSONResponse(content=jobs_df.to_dict(orient='records'))
+    return JSONResponse({"content":jobs_df.to_dict(orient='records')})
 
 
 
