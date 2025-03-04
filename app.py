@@ -33,7 +33,12 @@ def get_paginated_jobs_route(
     jobs_df = get_paginated_jobs("jobs", page_size, page_number)
     if jobs_df.empty:
         return JSONResponse(content={"message": "No jobs found"}, status_code=404)
+    
+    # Convert Timestamp objects to strings
+    jobs_df['date_posted'] = jobs_df['date_posted'].astype(str)
+    
     return JSONResponse(content=jobs_df.to_dict(orient='records'))
+
 
 
 
