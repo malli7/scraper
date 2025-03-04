@@ -7,6 +7,7 @@ from storage import count_documents,save_large_dataset_to_firestore,get_paginate
 from constants import JOB_ROLES 
 from datetime import datetime, timedelta
 import asyncio
+from fastapi.responses import JSONResponse
 
 
 app = FastAPI()
@@ -23,6 +24,7 @@ async def delete_old_records_route(
     return {"message": f"Deleted records older than {days_old} days"}
 
 
+
 @app.get('/paginated-jobs')
 def get_paginated_jobs_route(
     page_size: int = Query(10, description="Number of jobs per page"),
@@ -30,8 +32,9 @@ def get_paginated_jobs_route(
 ):
     jobs_df = get_paginated_jobs("jobs", page_size, page_number)
     if jobs_df.empty:
-        return {"message": "No jobs found"}
-    return jobs_df.to_dict(orient='records')
+        return JSONResponse(content={"message": "No jobs found"}, status_code=404)
+    return JSONResponse(content=jobs_df.to_dict(orient='records'))
+
 
 
 @app.get("/scrape-jobs")
