@@ -39,7 +39,18 @@ def get_paginated_jobs_route(
     return JSONResponse({"content":jobs_df.to_dict(orient='records')})
 
 
-
+@app.get('/paginated-jobs-urls')
+def get_paginated_jobs_urls_route(
+    page_size: int = Query(10, description="Number of jobs per page"),
+    page_number: int = Query(1, description="Page number to retrieve")
+):
+    jobs_df = get_paginated_jobs("jobs", page_size, page_number)
+    if jobs_df.empty:
+        return JSONResponse(content={"message": "No jobs found"}, status_code=404)
+    
+    # Select only the required columns
+    jobs_df = jobs_df[['id', 'job_url', 'job_url_direct']]
+    return JSONResponse({"content": jobs_df.to_dict(orient='records')})
 
 @app.get("/scrape-jobs")
 async def scrape_jobs_api(
