@@ -80,6 +80,9 @@ async def scrape_jobs_api(
         filtered_jobs = filtered_jobs[filtered_jobs['date_posted'] >= specified_date]
         filtered_jobs.replace({pd.NA: None}, inplace=True)
         filtered_jobs = pd.DataFrame(filtered_jobs) 
+        
+        filtered_jobs["category"] = role
+        
         entry_level_jobs = filtered_jobs.loc[filtered_jobs['entry_level'] =="Entry-Level"].copy()
         print("entry Jobs:", filtered_jobs['entry_level'].value_counts())
         
