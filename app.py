@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from typing import Optional
 import pandas as pd
 from scraper import scrape_jobs_async
@@ -7,8 +7,15 @@ from storage import count_documents,save_large_dataset_to_firestore,get_paginate
 from constants import JOB_ROLES 
 from datetime import datetime, timedelta
 import asyncio
+from resume_score import calculate_score
 from fastapi.responses import JSONResponse
 
+from pydantic import BaseModel
+
+# Define a Pydantic model for the request body
+class EvaluationRequest(BaseModel):
+    job_description: str
+    resume_text: str
 
 app = FastAPI()
 
@@ -39,18 +46,14 @@ def get_paginated_jobs_route(
     return JSONResponse({"content":jobs_df.to_dict(orient='records')})
 
 
-@app.get('/paginated-jobs-urls')
-def get_paginated_jobs_urls_route(
-    page_size: int = Query(10, description="Number of jobs per page"),
-    page_number: int = Query(1, description="Page number to retrieve")
-):
-    jobs_df = get_paginated_jobs("jobs", page_size, page_number)
-    if jobs_df.empty:
-        return JSONResponse(content={"message": "No jobs found"}, status_code=404)
+@app.post("/evaluate-resume")
+async def evaluate_resume_route(request: EvaluationRequest):
+    try:
+        result = calculate_score(request.job_description, request.resume_text)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
-    # Select only the required columns
-    jobs_df = jobs_df[['id', 'job_url', 'job_url_direct']]
-    return JSONResponse({"content": jobs_df.to_dict(orient='records')})
 
 @app.get("/scrape-jobs")
 async def scrape_jobs_api(
