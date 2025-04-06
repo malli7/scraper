@@ -78,8 +78,10 @@ async def scrape_jobs_api(
         filtered_jobs["entry_level"] = classifications
         filtered_jobs.drop_duplicates(subset=["id"], inplace=True)
         filtered_jobs.dropna(subset=["id","title", "entry_level", "description"], inplace=True)
-        filtered_jobs["date_posted"] = filtered_jobs["date_posted"].fillna(pd.to_datetime(datetime.today().strftime('%Y-%m-%d'), errors='coerce').date())
-        filtered_jobs["date_posted"] = pd.to_datetime(filtered_jobs["date_posted"], errors="coerce").dt.date
+        filtered_jobs["date_posted"] = filtered_jobs["date_posted"].fillna(
+            pd.to_datetime(datetime.today().strftime('%Y-%m-%d'), errors='coerce').date()
+        )
+        filtered_jobs["date_posted"] = pd.to_datetime(filtered_jobs["date_posted"], errors="coerce").dt.tz_localize('UTC').dt.date
         filtered_jobs = filtered_jobs[filtered_jobs['date_posted'] >= specified_date]
         filtered_jobs.replace({pd.NA: None}, inplace=True)
         filtered_jobs = pd.DataFrame(filtered_jobs) 

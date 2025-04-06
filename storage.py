@@ -53,7 +53,6 @@ async def save_large_dataset_to_firestore(jobs_df, collection_name, batch_size=4
 
 
 async def delete_old_records(collection_name, date_field="date_posted", days_old=3):
-   
     today = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
     threshold_date = today - datetime.timedelta(days=days_old)
 
@@ -67,24 +66,27 @@ async def delete_old_records(collection_name, date_field="date_posted", days_old
             try:
                 date_posted = data[date_field]
 
+                # Normalize date_posted to UTC and ensure it's in YYYY-MM-DD format
                 if isinstance(date_posted, str):
                     date_posted = datetime.datetime.strptime(date_posted, "%Y-%m-%d").replace(tzinfo=pytz.UTC)
                 elif isinstance(date_posted, datetime.datetime):
                     if date_posted.tzinfo is None:
-                        date_posted = date_posted.replace(tzinfo=pytz.UTC)  
+                        date_posted = date_posted.replace(tzinfo=pytz.UTC)
+                elif isinstance(date_posted, datetime.date):
+                    date_posted = datetime.datetime.combine(date_posted, datetime.datetime.min.time()).replace(tzinfo=pytz.UTC)
                 else:
-                    continue  
-                
+                    continue
+
                 # Perform comparison
                 if date_posted < threshold_date:
                     db.collection(collection_name).document(doc.id).delete()
                     deleted_count += 1
 
             except Exception as e:
+                print(f"Error processing document {doc.id}: {e}")
                 continue
 
     print(f"✅ Deleted {deleted_count} old records from {collection_name}.")
-
 
 
 def count_documents(collection_name):
