@@ -34,7 +34,9 @@ def evaluate_resume(job_description, resume_text):
              ]
             }}
             
-            Avoid fluff. Each insight should be sharp, specific, and directly based on the job vs. resume comparison.
+            Rules:
+            - Avoid fluff. Each insight should be sharp, specific, and directly based on the job vs. resume comparison.
+            - Donot generate generic 5 multiple scores like 45, 85 , be specific and absolute scores and justify the score in review points.
             
             Job Description:
             {job_description}
