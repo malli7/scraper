@@ -1,12 +1,5 @@
 .env
 serviceAccountKey.json
-__pycache__
-model.py 
-a.csv
-bot2.py
+__pycache__ 
 bot3.py
-a.py
 mallikarjuna_resume_1.pdf
-jobs.csv
-bot4.py
-dashboard.py

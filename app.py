@@ -1,18 +1,15 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, HTTPException
 from typing import Optional
 import pandas as pd
 from scraper import scrape_jobs_async
 from classifier import classify_jobs
-from storage import count_documents,save_large_dataset_to_firestore,get_paginated_jobs,delete_old_records
+from storage import count_documents,save_large_dataset_to_firestore
 from constants import JOB_ROLES 
 from datetime import datetime, timedelta
 import asyncio
 from resume_score import calculate_score
-from fastapi.responses import JSONResponse
-
 from pydantic import BaseModel
 
-# Define a Pydantic model for the request body
 class EvaluationRequest(BaseModel):
     job_description: str
     resume_text: str
@@ -23,27 +20,6 @@ app = FastAPI()
 async def old_api():
     return count_documents("jobs") 
 
-@app.get('/delete')
-async def delete_old_records_route(
-    days_old: int = Query(3, description="Number of days old to delete records")
-):
-    await delete_old_records("jobs", days_old=days_old)
-    return {"message": f"Deleted records older than {days_old} days"}
-
-
-
-@app.get('/paginated-jobs')
-def get_paginated_jobs_route(
-    page_size: int = Query(10, description="Number of jobs per page"),
-    page_number: int = Query(1, description="Page number to retrieve")
-):
-    jobs_df = get_paginated_jobs("jobs", page_size, page_number)
-    if jobs_df.empty:
-        return JSONResponse(content={"message": "No jobs found"}, status_code=404)
-    
-    # Convert Timestamp objects to strings
-    jobs_df['date_posted'] = jobs_df['date_posted'].astype(str)
-    return JSONResponse({"content":jobs_df.to_dict(orient='records')})
 
 
 @app.post("/evaluate-resume")
